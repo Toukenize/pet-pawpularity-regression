@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "kaggle_workspace"
+name = "pawpularity"
 version = "0.1.0"
 description = ""
 authors = ["Chew Ze Yong <gavinchew92@gmail.com>"]
@@ -12,7 +12,11 @@ ipykernel = "^6.4.1"
 kaggle = "^1.5.12"
 torch = "^1.9.1"
 timm = "^0.4.12"
-
+pytorch-lightning = "^1.4.9"
+wandb = "^0.12.4"
+scikit-learn = "^1.0"
+opencv-python = "^4.5.3"
+albumentations = "^1.1.0"
 [tool.poetry.dev-dependencies]
 flake8 = "^3.9.2"
 autopep8 = "^1.5.7"
