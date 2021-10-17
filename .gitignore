@@ -1,6 +1,8 @@
 *.zip
 *.ipynb
+*.ckpt
 .venv
 data/
 notebook/
 __pycache__
+lightning_logs/

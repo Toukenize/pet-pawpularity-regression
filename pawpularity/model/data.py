@@ -1,15 +1,30 @@
+import os
+from pathlib import Path
+from random import shuffle
+from typing import List, Optional
+
 import albumentations as a
 import cv2
+import pandas as pd
 import torch
+from albumentations.core.composition import Compose
 from albumentations.pytorch import ToTensorV2
+from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import DataLoader, Dataset
 
-from ..config.constants import IMAGENET_MEAN, IMAGENET_STD
+from ..config.constants import IMAGENET_MEAN, IMAGENET_STD, IMG_DIM
 
 
 class PawData(Dataset):
-    def __init__(self, df, img_folder, transforms, img_path_col='Id',
-                 label_col=None, meta_cols=None, norm=True):
+    def __init__(
+            self,
+            df: pd.DataFrame,
+            img_folder: Path,
+            transforms: Compose,
+            img_path_col: str = 'Id',
+            label_col: Optional[str] = None,
+            meta_cols: Optional[List[str]] = None,
+            norm: bool = True):
 
         self.df = df.reset_index(drop=True)
         self.img_folder = img_folder
@@ -54,7 +69,7 @@ class PawData(Dataset):
         return data
 
 
-def get_train_transforms(img_dim):
+def get_train_transforms(img_dim: int) -> Compose:
 
     trans = a.Compose([
         a.PadIfNeeded(img_dim, img_dim),
@@ -70,7 +85,7 @@ def get_train_transforms(img_dim):
     return trans
 
 
-def get_val_transforms(img_dim):
+def get_val_transforms(img_dim: int) -> Compose:
 
     trans = a.Compose([
         a.PadIfNeeded(img_dim, img_dim),
@@ -80,3 +95,59 @@ def get_val_transforms(img_dim):
     ])
 
     return trans
+
+
+def get_dataloader(
+        df: pd.DataFrame,
+        img_folder: Path,
+        batch_size: int,
+        img_dim: int = IMG_DIM,
+        is_train: bool = True,
+        shuffle: bool = True,
+        meta_cols: Optional[List[str]] = None,
+        label_col: Optional[str] = None,
+) -> DataLoader:
+
+    if is_train:
+        trans = get_train_transforms(img_dim)
+    else:
+        trans = get_val_transforms(img_dim)
+
+    data = PawData(
+        df=df,
+        img_folder=img_folder,
+        transforms=trans,
+        img_path_col='Id',
+        label_col=label_col,
+        meta_cols=meta_cols
+    )
+
+    dataloader = DataLoader(
+        data,
+        shuffle=shuffle,
+        batch_size=batch_size,
+        num_workers=os.cpu_count()
+    )
+
+    return dataloader
+
+
+def get_xth_split(x, y, split_num, n_splits=5):
+
+    assert n_splits > split_num >= 0,\
+        f'Split num {split_num} is invalid. Must be >= 0, < {n_splits}'
+
+    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=2021)
+
+    for i, (train_idx, val_idx) in enumerate(skf.split(x, y)):
+
+        if i == split_num:
+            return train_idx, val_idx
+
+        else:
+            continue
+
+
+def bin_paw_train_target(df, bins=10):
+    df['bin'] = pd.cut(df['Pawpularity'], bins, labels=False)
+    return df
