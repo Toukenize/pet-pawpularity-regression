@@ -1,5 +1,5 @@
 import pandas as pd
-from pytorch_lightning import Trainer, callbacks, seed_everything
+from pytorch_lightning import Trainer, seed_everything
 
 from pawpularity.config.constants import (DROPOUT, LIN_HIDDEN, LR, META_COLS,
                                           MODEL_NAME, N_SPLITS, NUM_EPOCHS,
@@ -28,7 +28,7 @@ def train_model():
             is_train=True,
             shuffle=True,
             meta_cols=META_COLS,
-            label_col='bin'
+            label_col='Pawpularity'
         )
 
         val_loader = get_dataloader(
@@ -38,7 +38,7 @@ def train_model():
             is_train=False,
             shuffle=False,
             meta_cols=META_COLS,
-            label_col='bin'
+            label_col='Pawpularity'
         )
 
         model = PawImgModel(
@@ -64,7 +64,7 @@ def train_model():
         )
 
         trainer.fit(
-            model, train_dataloader=train_loader,
+            model, train_dataloaders=train_loader,
             val_dataloaders=val_loader
         )
 

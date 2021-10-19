@@ -1,19 +1,15 @@
+import os
 from pathlib import Path
 
 # DATA CONFIGS
-META_COLS = [
-    'Subject Focus', 'Eyes', 'Face', 'Near', 'Action', 'Accessory',
-    'Group', 'Collage', 'Human', 'Occlusion', 'Info', 'Blur'
-]
-IMAGENET_MEAN = [0.485, 0.456, 0.406]  # RGB
-IMAGENET_STD = [0.229, 0.224, 0.225]  # RGB
-IMG_DIM = 256
-TRAIN_BATCH_SIZE = 8
-VAL_BATCH_SIZE = TRAIN_BATCH_SIZE * 4
-N_SPLITS = 5
+META_COLS = eval(os.getenv('META_COLS'))
+IMAGENET_MEAN = eval(os.getenv('IMAGENET_MEAN'))
+IMAGENET_STD = eval(os.getenv('IMAGENET_STD'))
+IMG_DIM = int(os.getenv('IMG_DIM'))
+N_SPLITS = int(os.getenv('N_SPLITS'))
 
 # DATA PATHS
-PROJECT_ROOT = Path(__file__).parents[2]
+PROJECT_ROOT = Path(os.getenv('PROJECT_ROOT'))
 DATA_DIR = PROJECT_ROOT / 'data'
 TRAIN_IMG_DIR = DATA_DIR / 'train'
 TEST_IMG_DIR = DATA_DIR / 'test'
@@ -23,11 +19,15 @@ TEST_CSV = DATA_DIR / 'train.csv'
 
 OUT_DIR = PROJECT_ROOT / 'model'
 
-# MODEL_CONFIGS
-MODEL_NAME = 'resnet18'
-DROPOUT = 0.15
-LIN_HIDDEN = 128
-LR = 1e-4
-NUM_EPOCHS = 5
-NUM_WARMUP_EPOCHS = 2
-NUM_COS_CYCLE = 0.4
+# MODEL CONFIGS
+MODEL_NAME = str(os.getenv('MODEL_NAME'))
+DROPOUT = float(os.getenv('DROPOUT'))
+LIN_HIDDEN = int(os.getenv('LIN_HIDDEN'))
+
+# TRAIN CONFIGS
+TRAIN_BATCH_SIZE = int(os.getenv('TRAIN_BATCH_SIZE'))
+VAL_BATCH_SIZE = int(os.getenv('VAL_BATCH_SIZE'))
+LR = float(os.getenv('LR'))
+NUM_EPOCHS = int(os.getenv('NUM_EPOCHS'))
+NUM_WARMUP_EPOCHS = int(os.getenv('NUM_WARMUP_EPOCHS'))
+NUM_COS_CYCLE = float(os.getenv('NUM_COS_CYCLE'))

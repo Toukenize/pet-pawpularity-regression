@@ -26,6 +26,7 @@ class PawImgModel(LightningModule):
 
         # Optimizers
         self.lr = optim_configs['lr']
+        self.save_hyperparameters()
 
     def forward(self, image, meta):
         img_out = self.model(image)
@@ -45,11 +46,14 @@ class PawImgModel(LightningModule):
         target = batch.pop('label')
         logits = self.forward(**batch)
         bce_loss = self.bce_loss(logits, target)
+
         rmse_loss = torch.sqrt(
             self.mse_loss(logits.sigmoid() * 100, target * 100)
         )
+
         self.log('bce_loss', bce_loss, prog_bar=True)
         self.log('rmse_loss', rmse_loss, prog_bar=True)
+
         return bce_loss
 
     def validation_step(self, batch, _batch_idx):
@@ -60,8 +64,8 @@ class PawImgModel(LightningModule):
         rmse_loss = torch.sqrt(
             self.mse_loss(logits.sigmoid() * 100, target * 100)
         )
-        self.log('bce_loss', bce_loss, prog_bar=True)
-        self.log('rmse_loss', rmse_loss, prog_bar=True)
+        self.log('val_bce_loss', bce_loss, prog_bar=True)
+        self.log('val_rmse_loss', rmse_loss, prog_bar=True)
 
         return bce_loss
 
