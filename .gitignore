@@ -6,3 +6,5 @@ data/
 notebook/
 __pycache__
 lightning_logs/
+secrets.env
+wandb

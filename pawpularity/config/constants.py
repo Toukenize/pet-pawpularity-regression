@@ -31,3 +31,9 @@ LR = float(os.getenv('LR'))
 NUM_EPOCHS = int(os.getenv('NUM_EPOCHS'))
 NUM_WARMUP_EPOCHS = int(os.getenv('NUM_WARMUP_EPOCHS'))
 NUM_COS_CYCLE = float(os.getenv('NUM_COS_CYCLE'))
+
+# WANDB CONFIGS
+
+WANDB_PROJECT = os.getenv('WANDB_PROJECT')
+WANDB_ENTITY = os.getenv('WANDB_ENTITY')
+RUN_NAME = os.getenv('RUN_NAME')

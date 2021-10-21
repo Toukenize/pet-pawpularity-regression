@@ -1,10 +1,12 @@
 import pandas as pd
 from pytorch_lightning import Trainer, seed_everything
+from pytorch_lightning.loggers import WandbLogger
 
-from pawpularity.config.constants import (DROPOUT, LIN_HIDDEN, LR, META_COLS,
-                                          MODEL_NAME, N_SPLITS, NUM_EPOCHS,
-                                          OUT_DIR, TRAIN_BATCH_SIZE, TRAIN_CSV,
-                                          TRAIN_IMG_DIR)
+from pawpularity.config.constants import (DROPOUT, LR, META_COLS, MODEL_NAME,
+                                          N_SPLITS, NUM_EPOCHS, OUT_DIR,
+                                          RUN_NAME, TRAIN_BATCH_SIZE,
+                                          TRAIN_CSV, TRAIN_IMG_DIR,
+                                          WANDB_ENTITY, WANDB_PROJECT)
 from pawpularity.model.callback import get_checkpoint_callback
 from pawpularity.model.data import (bin_paw_train_target, get_dataloader,
                                     get_xth_split)
@@ -12,6 +14,9 @@ from pawpularity.model.model import PawImgModel
 
 
 def train_model():
+
+    logger = WandbLogger(
+        name=RUN_NAME, project=WANDB_PROJECT, entity=WANDB_ENTITY)
 
     df = pd.read_csv(TRAIN_CSV)
     df = bin_paw_train_target(df)
@@ -60,7 +65,8 @@ def train_model():
 
         trainer = Trainer(
             gpus=1, max_epochs=NUM_EPOCHS,
-            callbacks=[checkpoint_callback]
+            callbacks=[checkpoint_callback],
+            logger=logger
         )
 
         trainer.fit(
