@@ -1,7 +1,11 @@
+import logging
+
 import timm
 import torch
 import torch.nn as nn
 from pytorch_lightning import LightningModule
+from torch.optim import AdamW
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
 class PawImgModel(LightningModule):
@@ -70,4 +74,20 @@ class PawImgModel(LightningModule):
         return bce_loss
 
     def configure_optimizers(self):
-        return torch.optim.AdamW(self.parameters(), lr=self.lr)
+        opt = AdamW(self.parameters(), lr=self.lr)
+        sch = ReduceLROnPlateau(
+            opt, mode='min', patience=3, verbose=True, factor=0.5)
+        return {
+            "optimizer": opt,
+            "lr_scheduler": sch,
+            "monitor": "val_rmse_loss"
+        }
+
+    def on_validation_end(self):
+
+        sch = self.lr_schedulers()
+
+        if isinstance(sch, ReduceLROnPlateau):
+            val_monitor = self.trainer.callback_metrics['val_rmse_loss']
+            sch.step(val_monitor)
+            logging.info(f"Val rmse loss : {val_monitor}")

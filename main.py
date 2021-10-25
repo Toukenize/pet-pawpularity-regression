@@ -3,11 +3,12 @@ from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.loggers import WandbLogger
 
 from pawpularity.config.constants import (DROPOUT, LR, META_COLS, MODEL_NAME,
-                                          N_SPLITS, NUM_EPOCHS, OUT_DIR,
-                                          RUN_NAME, TRAIN_BATCH_SIZE,
-                                          TRAIN_CSV, TRAIN_IMG_DIR,
-                                          WANDB_ENTITY, WANDB_PROJECT)
-from pawpularity.model.callback import get_checkpoint_callback
+                                          N_SPLITS, NUM_EPOCHS,
+                                          NUM_VAL_PER_EPOCH, OUT_DIR, RUN_NAME,
+                                          TRAIN_BATCH_SIZE, TRAIN_CSV,
+                                          TRAIN_IMG_DIR, WANDB_ENTITY,
+                                          WANDB_PROJECT)
+from pawpularity.model.callback import get_callbacks
 from pawpularity.model.data import (bin_paw_train_target, get_dataloader,
                                     get_xth_split)
 from pawpularity.model.model import PawImgModel
@@ -15,14 +16,15 @@ from pawpularity.model.model import PawImgModel
 
 def train_model():
 
-    logger = WandbLogger(
-        name=RUN_NAME, project=WANDB_PROJECT, entity=WANDB_ENTITY)
-
     df = pd.read_csv(TRAIN_CSV)
     df = bin_paw_train_target(df)
     seed_everything(2021, workers=True)
 
     for i in range(N_SPLITS):
+
+        logger = WandbLogger(
+            name=f'fold_{i}|' + RUN_NAME, project=WANDB_PROJECT, entity=WANDB_ENTITY)
+
         train_idx, val_idx = get_xth_split(
             df.index, df['bin'], split_num=i, n_splits=N_SPLITS)
 
@@ -54,18 +56,19 @@ def train_model():
             optim_configs=dict(lr=LR)
         )
 
-        checkpoint_callback = get_checkpoint_callback(
+        callbacks = get_callbacks(
             out_dir=OUT_DIR,
             file_prefix=f'fold_{i}',
-            monitor='val_bce_loss',
-            save_top_k=1,
+            monitor='val_rmse_loss',
             mode='min',
-            save_weights_only=True
+            patience=6
         )
 
         trainer = Trainer(
-            gpus=1, max_epochs=NUM_EPOCHS,
-            callbacks=[checkpoint_callback],
+            gpus=1,
+            val_check_interval=len(train_loader) // NUM_VAL_PER_EPOCH,
+            max_epochs=NUM_EPOCHS,
+            callbacks=callbacks,
             logger=logger
         )
 
