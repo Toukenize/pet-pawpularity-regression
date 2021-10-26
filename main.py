@@ -2,6 +2,7 @@ import pandas as pd
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.loggers import WandbLogger
 
+import wandb
 from pawpularity.config.constants import (DROPOUT, LR, META_COLS, MODEL_NAME,
                                           N_SPLITS, NUM_EPOCHS,
                                           NUM_VAL_PER_EPOCH, OUT_DIR, RUN_NAME,
@@ -23,7 +24,10 @@ def train_model():
     for i in range(N_SPLITS):
 
         logger = WandbLogger(
-            name=f'fold_{i}|' + RUN_NAME, project=WANDB_PROJECT, entity=WANDB_ENTITY)
+            name=f'Fold_{i}|{RUN_NAME}',
+            project=WANDB_PROJECT,
+            entity=WANDB_ENTITY,
+            group=RUN_NAME)
 
         train_idx, val_idx = get_xth_split(
             df.index, df['bin'], split_num=i, n_splits=N_SPLITS)
@@ -76,6 +80,8 @@ def train_model():
             model, train_dataloaders=train_loader,
             val_dataloaders=val_loader
         )
+
+        wandb.finish()
 
 
 if __name__ == "__main__":
