@@ -1,19 +1,28 @@
 import logging
+from typing import Dict, Optional
 
 import timm
 import torch
 import torch.nn as nn
 from pytorch_lightning import LightningModule
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+
+from .scheduler import (get_constant_schedule_with_warmup,
+                        get_cosine_schedule_with_warmup,
+                        get_step_schedule_with_warmup)
 
 
 class PawImgModel(LightningModule):
 
     def __init__(
-            self, model_name, dropout, optim_configs,
-            meta_col_dim=0,
-            **params):
+            self,
+            model_name: str,
+            dropout: float,
+            optim_configs: Dict,
+            # Validation done externally
+            scheduler_configs: Optional[Dict] = None,
+            meta_col_dim: int = 0,
+            ** params):
 
         super().__init__()
         self.model = timm.create_model(model_name, **params)
@@ -29,7 +38,8 @@ class PawImgModel(LightningModule):
         self.mse_loss = nn.MSELoss()
 
         # Optimizers
-        self.lr = optim_configs['lr']
+        self.optim_config = optim_configs
+        self.scheduler_configs = scheduler_configs
         self.save_hyperparameters()
 
     def forward(self, image, meta):
@@ -74,20 +84,32 @@ class PawImgModel(LightningModule):
         return bce_loss
 
     def configure_optimizers(self):
-        opt = AdamW(self.parameters(), lr=self.lr)
-        sch = ReduceLROnPlateau(
-            opt, mode='min', patience=3, verbose=True, factor=0.5)
+
+        opt = AdamW(self.parameters(), lr=self.optim_config["lr"])
+
+        # Get warmup scheduler
+        if self.scheduler_configs is not None:
+            sch_type = self.scheduler_configs.pop('scheduler')
+
+            if sch_type == 'cosine_warmup':
+                sch_func = get_cosine_schedule_with_warmup
+
+            elif sch_type == 'constant_warmup':
+                sch_func = get_constant_schedule_with_warmup
+
+            elif sch_type == 'step_warmup':
+                sch_func = get_step_schedule_with_warmup
+
+            lr_warmup = sch_func(
+                opt, **self.scheduler_configs
+            )
+
         return {
             "optimizer": opt,
-            "lr_scheduler": sch,
-            "monitor": "val_rmse_loss"
+            "lr_scheduler": {
+                "scheduler": lr_warmup,
+                "interval": "epoch",
+                "frequency": 1,
+                "name": f"LR Scheduler ({sch_type})"
+            }
         }
-
-    def on_validation_end(self):
-
-        sch = self.lr_schedulers()
-
-        if isinstance(sch, ReduceLROnPlateau):
-            val_monitor = self.trainer.callback_metrics['val_rmse_loss']
-            sch.step(val_monitor)
-            logging.info(f"Val rmse loss : {val_monitor}")

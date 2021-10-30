@@ -37,11 +37,25 @@ VAL_BATCH_SIZE = int(os.getenv('VAL_BATCH_SIZE'))
 LR = float(os.getenv('LR'))
 NUM_EPOCHS = int(os.getenv('NUM_EPOCHS'))
 NUM_VAL_PER_EPOCH = int(os.getenv('NUM_VAL_PER_EPOCH'))
-REDUCE_LR_PATIENCE = int(os.getenv('REDUCE_LR_PATIENCE'))
 EARLY_STOP_PATIENCE = int(os.getenv('EARLY_STOP_PATIENCE'))
 
-# WANDB CONFIGS
+# SCHEDULER CONFIGS
+SCHEDULER = os.getenv('SCHEDULER')
+NUM_WARMUP_EPOCHS = int(os.getenv('NUM_WARMUP_EPOCHS'))
 
+NUM_CYCLES = os.getenv('NUM_CYCLES')
+if NUM_CYCLES is not None:
+    NUM_CYCLES = float(NUM_CYCLES)
+
+STEP_SIZE = os.getenv('STEP_SIZE')
+if STEP_SIZE is not None:
+    STEP_SIZE = int(STEP_SIZE)
+
+STEP_FACTOR = os.getenv('STEP_FACTOR')
+if STEP_FACTOR is not None:
+    STEP_FACTOR = float(STEP_FACTOR)
+
+# WANDB CONFIGS
 WANDB_PROJECT = os.getenv('WANDB_PROJECT')
 WANDB_ENTITY = os.getenv('WANDB_ENTITY')
 RUN_NAME = os.getenv('RUN_NAME')

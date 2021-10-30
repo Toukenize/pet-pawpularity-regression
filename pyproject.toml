@@ -18,6 +18,8 @@ scikit-learn = "^1.0"
 opencv-python = "^4.5.3"
 albumentations = "^1.1.0"
 python-dotenv = "^0.19.1"
+pydantic = "^1.8.2"
+lightning-bolts = "^0.4.0"
 [tool.poetry.dev-dependencies]
 flake8 = "^3.9.2"
 autopep8 = "^1.5.7"
