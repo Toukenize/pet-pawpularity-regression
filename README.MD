@@ -10,7 +10,10 @@
 3. If no GPU is available on your environment, do the following to manually install the non-GPU version of dependencies:
     1. Create new environment `conda create -n paw-conda python=3.7 tensorflow pytorch -c pytorch`
     2. Install additional dependencies 
-        > `pip install pandas ipykernel kaggle timm pytorch-lightning wandb scikit-learn opencv-python albumentations python-dotenv pydantic flake8 autopep8`
+        
+        ```
+        pip install pandas ipykernel kaggle timm pytorch-lightning wandb scikit-learn opencv-python albumentations python-dotenv pydantic flake8 autopep8
+        ```
 
 
 ## 2. Jupyter Notebook
