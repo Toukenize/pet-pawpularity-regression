@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from random import shuffle
 from typing import List, Optional
 
 import albumentations as a
@@ -12,7 +11,7 @@ from albumentations.pytorch import ToTensorV2
 from sklearn.model_selection import StratifiedKFold
 from torch.utils.data import DataLoader, Dataset
 
-from ..config.constants import IMAGENET_MEAN, IMAGENET_STD, IMG_DIM
+from ...config.constants import IMAGENET_MEAN, IMAGENET_STD, IMG_DIM
 
 
 class PawData(Dataset):
@@ -130,24 +129,3 @@ def get_dataloader(
     )
 
     return dataloader
-
-
-def get_xth_split(x, y, split_num, n_splits=5):
-
-    assert n_splits > split_num >= 0,\
-        f'Split num {split_num} is invalid. Must be >= 0, < {n_splits}'
-
-    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=2021)
-
-    for i, (train_idx, val_idx) in enumerate(skf.split(x, y)):
-
-        if i == split_num:
-            return train_idx, val_idx
-
-        else:
-            continue
-
-
-def bin_paw_train_target(df, bins=10):
-    df['bin'] = pd.cut(df['Pawpularity'], bins, labels=False)
-    return df

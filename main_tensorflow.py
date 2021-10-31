@@ -14,17 +14,18 @@ from pawpularity.config.constants import (DROPOUT, EARLY_STOP_PATIENCE, LR,
                                           TRAIN_BATCH_SIZE, TRAIN_CSV,
                                           TRAIN_IMG_DIR, WANDB_ENTITY,
                                           WANDB_PROJECT)
-from pawpularity.model.callback import get_callbacks
-from pawpularity.model.data import (bin_paw_train_target, get_dataloader,
-                                    get_xth_split)
-from pawpularity.model.model import PawImgModel
-from pawpularity.model.scheduler import ScheduleValidator
+from pawpularity.model.pytorch_lightning.callback import get_callbacks
+from pawpularity.model.pytorch_lightning.data import (bin_paw_train_target,
+                                                      get_dataloader,
+                                                      get_xth_split)
+from pawpularity.model.pytorch_lightning.model import PawImgModel
+from pawpularity.model.pytorch_lightning.scheduler import ScheduleValidator
 
 logging.basicConfig(level=logging.INFO)
 
-
 # TODO: Add arguments to control script behaviour
 # e.g. sampling, number of folds
+
 
 def train_model():
 

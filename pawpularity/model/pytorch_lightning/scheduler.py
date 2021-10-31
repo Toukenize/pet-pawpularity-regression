@@ -4,10 +4,9 @@ import math
 from enum import Enum
 from typing import Optional
 
-from numpy import e
 from pydantic import BaseModel, validator
 from torch.optim import Optimizer
-from torch.optim.lr_scheduler import LambdaLR, SequentialLR, StepLR
+from torch.optim.lr_scheduler import LambdaLR
 
 
 class Scheduler(Enum):
