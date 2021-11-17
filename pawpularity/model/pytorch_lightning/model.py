@@ -1,12 +1,17 @@
-import logging
+import os
 from typing import Dict, Optional
 
+import pandas as pd
 import timm
 import torch
 import torch.nn as nn
-from pytorch_lightning import LightningModule
 from torch.optim import AdamW
+from torch.utils.data import DataLoader
 
+from pytorch_lightning import LightningModule
+
+from ...config.constants import META_COLS, TRAIN_IMG_DIR
+from .data import get_dataset
 from .scheduler import (get_constant_schedule_with_warmup,
                         get_cosine_schedule_with_warmup,
                         get_step_schedule_with_warmup)
@@ -21,7 +26,11 @@ class PawImgModel(LightningModule):
             optim_configs: Dict,
             # Validation done externally
             scheduler_configs: Optional[Dict] = None,
+            batch_size: int = 32,
             meta_col_dim: int = 0,
+            df: Optional[pd.DataFrame] = None,
+            train_idx: Optional[pd.Index] = None,
+            val_idx: Optional[pd.Index] = None,
             ** params):
 
         super().__init__()
@@ -40,7 +49,33 @@ class PawImgModel(LightningModule):
         # Optimizers
         self.optim_config = optim_configs
         self.scheduler_configs = scheduler_configs
-        self.save_hyperparameters()
+
+        # Batch size & data
+        # This will be overwritten when auto_scale_batch_size is True
+        self.batch_size = batch_size
+        self.df = df
+        self.train_idx = train_idx
+        self.val_idx = val_idx
+
+        self.save_hyperparameters(ignore=['df', 'train_idx', 'val_idx'])
+
+    def prepare_data(self):
+
+        self.train_data = get_dataset(
+            df=self.df.iloc[self.train_idx],
+            img_folder=TRAIN_IMG_DIR,
+            is_train=True,
+            meta_cols=META_COLS,
+            label_col='Pawpularity'
+        )
+
+        self.val_data = get_dataset(
+            df=self.df.iloc[self.val_idx],
+            img_folder=TRAIN_IMG_DIR,
+            is_train=False,
+            meta_cols=META_COLS,
+            label_col='Pawpularity'
+        )
 
     def forward(self, image, meta):
         img_out = self.model(image)
@@ -54,6 +89,22 @@ class PawImgModel(LightningModule):
         out = self.out(out)
 
         return out
+
+    def train_dataloader(self):
+        return DataLoader(
+            self.train_data,
+            batch_size=self.hparams.batch_size,
+            shuffle=True,
+            num_workers=os.cpu_count()
+        )
+
+    def val_dataloader(self):
+        return DataLoader(
+            self.val_data,
+            batch_size=self.hparams.batch_size*2,
+            shuffle=False,
+            num_workers=os.cpu_count()
+        )
 
     def training_step(self, batch, _batch_idx):
 
@@ -89,7 +140,11 @@ class PawImgModel(LightningModule):
 
         # Get warmup scheduler
         if self.scheduler_configs is not None:
-            sch_type = self.scheduler_configs.pop('scheduler')
+
+            # Copy configs so that we can run this multiple times
+            # during trainer.tune(model)
+            sch_configs = self.scheduler_configs.copy()
+            sch_type = sch_configs.pop('scheduler')
 
             if sch_type == 'cosine_warmup':
                 sch_func = get_cosine_schedule_with_warmup
@@ -101,7 +156,7 @@ class PawImgModel(LightningModule):
                 sch_func = get_step_schedule_with_warmup
 
             lr_warmup = sch_func(
-                opt, **self.scheduler_configs
+                opt, **sch_configs
             )
 
         return {

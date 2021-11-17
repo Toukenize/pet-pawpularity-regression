@@ -8,8 +8,7 @@ import pandas as pd
 import torch
 from albumentations.core.composition import Compose
 from albumentations.pytorch import ToTensorV2
-from sklearn.model_selection import StratifiedKFold
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, dataset
 
 from ...config.constants import IMAGENET_MEAN, IMAGENET_STD, IMG_DIM
 
@@ -96,23 +95,21 @@ def get_val_transforms(img_dim: int) -> Compose:
     return trans
 
 
-def get_dataloader(
+def get_dataset(
         df: pd.DataFrame,
         img_folder: Path,
-        batch_size: int,
         img_dim: int = IMG_DIM,
         is_train: bool = True,
-        shuffle: bool = True,
         meta_cols: Optional[List[str]] = None,
         label_col: Optional[str] = None,
-) -> DataLoader:
+) -> Dataset:
 
     if is_train:
         trans = get_train_transforms(img_dim)
     else:
         trans = get_val_transforms(img_dim)
 
-    data = PawData(
+    dataset = PawData(
         df=df,
         img_folder=img_folder,
         transforms=trans,
@@ -121,11 +118,4 @@ def get_dataloader(
         meta_cols=meta_cols
     )
 
-    dataloader = DataLoader(
-        data,
-        shuffle=shuffle,
-        batch_size=batch_size,
-        num_workers=os.cpu_count()
-    )
-
-    return dataloader
+    return dataset
